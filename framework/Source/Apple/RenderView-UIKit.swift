@@ -21,6 +21,7 @@ public class RenderView:UIView, ImageConsumer {
     }()
 
     // TODO: Need to set viewport to appropriate size, resize viewport on view reshape
+    private var boundsSizeAtFrameBufferEpoch: CGSize = .zero
     
     required public init?(coder:NSCoder) {
         super.init(coder:coder)
@@ -50,6 +51,17 @@ public class RenderView:UIView, ImageConsumer {
         destroyDisplayFramebuffer()
     }
     
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        if bounds.size != boundsSizeAtFrameBufferEpoch && bounds.size != .zero {
+            
+            sharedImageProcessingContext.runOperationSynchronously {
+                self.destroyDisplayFramebuffer()
+                self.createDisplayFramebuffer()
+            }
+        }
+    }
+    
     func createDisplayFramebuffer() {
         var newDisplayFramebuffer:GLuint = 0
         glGenFramebuffers(1, &newDisplayFramebuffer)
@@ -67,11 +79,13 @@ public class RenderView:UIView, ImageConsumer {
         var backingHeight:GLint = 0
         glGetRenderbufferParameteriv(GLenum(GL_RENDERBUFFER), GLenum(GL_RENDERBUFFER_WIDTH), &backingWidth)
         glGetRenderbufferParameteriv(GLenum(GL_RENDERBUFFER), GLenum(GL_RENDERBUFFER_HEIGHT), &backingHeight)
-        backingSize = GLSize(width:backingWidth, height:backingHeight)
         
         guard ((backingWidth > 0) && (backingHeight > 0)) else {
             fatalError("View had a zero size")
+            return
         }
+        
+        backingSize = GLSize(width:backingWidth, height:backingHeight)
 
         glFramebufferRenderbuffer(GLenum(GL_FRAMEBUFFER), GLenum(GL_COLOR_ATTACHMENT0), GLenum(GL_RENDERBUFFER), displayRenderbuffer!)
         
@@ -79,6 +93,8 @@ public class RenderView:UIView, ImageConsumer {
         if (status != GLenum(GL_FRAMEBUFFER_COMPLETE)) {
             fatalError("Display framebuffer creation failed with error: \(FramebufferCreationError(errorCode:status))")
         }
+        
+        boundsSizeAtFrameBufferEpoch = self.bounds.size
     }
     
     func destroyDisplayFramebuffer() {
