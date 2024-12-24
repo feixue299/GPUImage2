@@ -163,7 +163,7 @@ func fragmentShaderForOptimizedGaussianBlurOfRadius(_ radius:UInt, sigma:Double)
 #if GLES
         var shaderString = "uniform sampler2D inputImageTexture;\n uniform highp float texelWidth;\n uniform highp float texelHeight;\n \n varying highp vec2 blurCoordinates[\(1 + (numberOfOptimizedOffsets * 2))];\n \n void main()\n {\n lowp vec4 sum = vec4(0.0);\n"
 #else
-        var shaderString = "uniform sampler2D inputImageTexture;\n uniform float texelWidth;\n uniform float texelHeight;\n \n varying vec2 blurCoordinates[\(1 + (numberOfOptimizedOffsets * 2))];\n \n void main()\n {\n vec4 sum = vec4(0.0);\n"
+        var shaderString = "precision highp float;\n uniform sampler2D inputImageTexture;\n uniform float texelWidth;\n uniform float texelHeight;\n \n varying vec2 blurCoordinates[\(1 + (numberOfOptimizedOffsets * 2))];\n \n void main()\n {\n vec4 sum = vec4(0.0);\n"
 #endif
 
     // Inner texture loop
