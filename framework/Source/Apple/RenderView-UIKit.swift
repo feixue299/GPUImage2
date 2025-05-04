@@ -4,7 +4,7 @@ import UIKit
 
 // TODO: Add support for transparency
 // TODO: Deal with view resizing
-public class RenderView:UIView, ImageConsumer {
+open class RenderView:UIView, ImageConsumer {
     public var backgroundRenderColor = Color.black
     public var fillMode = FillMode.preserveAspectRatio
     public var orientation:ImageOrientation = .portrait
@@ -21,7 +21,6 @@ public class RenderView:UIView, ImageConsumer {
     }()
 
     // TODO: Need to set viewport to appropriate size, resize viewport on view reshape
-    private var boundsSizeAtFrameBufferEpoch: CGSize = .zero
     
     required public init?(coder:NSCoder) {
         super.init(coder:coder)
@@ -51,18 +50,7 @@ public class RenderView:UIView, ImageConsumer {
         destroyDisplayFramebuffer()
     }
     
-    public override func layoutSubviews() {
-        super.layoutSubviews()
-        if bounds.size != boundsSizeAtFrameBufferEpoch && bounds.size != .zero {
-            
-            sharedImageProcessingContext.runOperationSynchronously {
-                self.destroyDisplayFramebuffer()
-                self.createDisplayFramebuffer()
-            }
-        }
-    }
-    
-    func createDisplayFramebuffer() {
+    open func createDisplayFramebuffer() {
         var newDisplayFramebuffer:GLuint = 0
         glGenFramebuffers(1, &newDisplayFramebuffer)
         displayFramebuffer = newDisplayFramebuffer
@@ -82,7 +70,6 @@ public class RenderView:UIView, ImageConsumer {
         
         guard ((backingWidth > 0) && (backingHeight > 0)) else {
             fatalError("View had a zero size")
-            return
         }
         
         backingSize = GLSize(width:backingWidth, height:backingHeight)
@@ -94,10 +81,9 @@ public class RenderView:UIView, ImageConsumer {
             fatalError("Display framebuffer creation failed with error: \(FramebufferCreationError(errorCode:status))")
         }
         
-        boundsSizeAtFrameBufferEpoch = self.bounds.size
     }
     
-    func destroyDisplayFramebuffer() {
+    open func destroyDisplayFramebuffer() {
         sharedImageProcessingContext.runOperationSynchronously{
             if let displayFramebuffer = self.displayFramebuffer {
                 var temporaryFramebuffer = displayFramebuffer
@@ -118,7 +104,7 @@ public class RenderView:UIView, ImageConsumer {
         glViewport(0, 0, backingSize.width, backingSize.height)
     }
     
-    public func newFramebufferAvailable(_ framebuffer:Framebuffer, fromSourceIndex:UInt) {
+    open func newFramebufferAvailable(_ framebuffer:Framebuffer, fromSourceIndex:UInt) {
         if (displayFramebuffer == nil) {
             self.createDisplayFramebuffer()
         }
